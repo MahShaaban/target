@@ -1,0 +1,288 @@
+---
+title: "Using the `target` package"
+author: "Mahmoud Ahmed"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Using the target package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+## Overview
+
+In this document, we describe the [BETA](http://cistrome.org/BETA/) algorithm
+for predicting associated peaks from binding ChIP data and integrating binding
+data and expression data to predict direct binding target regions. In addition,
+we describe the implementation of the algorithm in an R package, `target`.
+Finally, we provide an example for using `target` to predict associated peaks
+and direct gene targets of androgen receptors in the LNCap cell line.
+
+## The theory
+
+The [BETA](http://cistrome.org/BETA/) algorithm in its simplest form, _minus_,
+is composed of three steps:
+
+1. Selecting the peaks ($p$) within a certain range from the regions of 
+interest ($g$).
+2. Calculate the distance ($\Delta$) between the center of the peak and each
+of the regions expressed relative to a distance of 100 kb.
+3. Calculate a the peak scores ($S_p$) as the transformed exponential of the
+distance, $\Delta$, as follows;
+
+$$
+S_p = e^{-(0.5+4\Delta)}
+$$
+
+4. Calculate the region/gene regulatory potential ($S_g$) as the sum of the 
+scores, $S_p$, as follows:
+
+$$
+S_g = \sum_{i=1}^k S_{pi}
+$$
+where $p$ is $\{1,...,k\}$ peaks near the region of interest.
+
+In addition, in [BETA](http://cistrome.org/BETA/) _basic_ another step is added
+to predict real region/gene targets
+
+5. Rank all regions based on their regulatory potential, $S_g$, to give their 
+binding potential ($R_{gb}$) and based on their differential expression 
+($R_{ge}$). The product of the two ranks predicts real region/gene targets.
+
+$$
+RP_g = \frac{R_{gb}\times R_{ge}}{n^2}
+$$
+
+where $n$ is the number of regions $g$. 
+
+## Python implementation
+
+The original [paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4135175/) on
+this work presented an implementation of the algorithm in
+[python](https://github.com/suwangbio/BETA) which can be invoked form the
+command-line interface (CLI).
+
+* Input: peaks file in `bed` format and optionally the differential expression
+output in `txt`
+
+* Output: `txt` files of the associated peaks and direct targets in each 
+direction; up and/or down.
+
+* Options: users can define the distances around the transcription start sites
+to select the overlapping peaks, cut offs for the significance of the peaks or
+the top number of peaks to be included in the analysis.
+
+## R implementation
+
+The `target` package implement the [BETA](http://cistrome.org/BETA/) algorithm
+in several low-level functions that correspond to the previously described
+steps.
+
+1. `merge_ranges`: select the peaks in the genomic regions of interest, e.g. 
+genes.
+2. `find_distance`: calculate the distance between the peaks and the regions 
+of interest, e.g. transcription start sites (TSS).
+3. `score_peaks`: calculate a regulatory score for each peak in relation to a 
+region of interest.
+4. `score_regions`: Calculate a regulatory score for regions of interest/genes
+5. `rank_product`: rank the regions of interest/genes based on the regulatory 
+potential and another statistics, e.g. differential expression.
+
+In addition, two high-level functions can be used to apply these functions 
+sequentially and obtain only the final output. These are:
+
+1. `associated_peaks`: select and calculate a regulatory potential for peaks 
+within a defined distance from regions of interest/genes.
+2. `direct_targets`: predict direct target regions among regions of 
+interest/genes based on the regulatory potential of the peaks in the region 
+and one more statistics such as differential expression.
+
+Finally, two additional functions `plot_predictions` and `test_predictions`
+were added to visually and statistically examine the predictions made by
+`target`.
+
+## Example
+
+The example below was presented in this
+[paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4135175/). The dataset 
+used in the example is from another published
+[study](https://www.ncbi.nlm.nih.gov/pubmed/17679089/). The study used the
+LNCap cell line to determine the androgen receptor (AR) binding sites using 
+ChIP-on-chip and the gene expression in the cell line after treatment with
+physiological androgen 5α-dihydrotestosterone (DHT) for 16 hours using
+microarrays. The binding sites of AR are recorded in a `bed` file, 
+`3656_peaks.bed`. The differential gene expression results are recorded in
+`AR_diff_expr.xls`. The reference genome
+[hg19](https://www.ncbi.nlm.nih.gov/assembly/GCF_000001405.13/) was used to
+define the gene coordinates and identifiers, `hg19.refseq`.
+
+```{r load_libraries}
+# load reguired libraries
+library(target)
+library(GenomicRanges)
+```
+
+Each of the three following chuncks is reading one of the required input data
+and transforming it into the appropriate format. The test data of the 
+[python](https://github.com/suwangbio/BETA) package is shipped with the R
+`target` package for testing purposes. Two datasets `real_peaks` and
+`real_transcripts` are the two `GRanges` object that holds the identified peaks
+and the differential expression results respectively. 
+
+```{r load_data}
+# load peaks and transcripts data
+data("real_peaks")
+data("real_transcripts")
+```
+
+The two high-level functions mentioned above can be called directly into the
+objects. `associated_peaks` takes as arguments two `GRanges` objects; `peaks`
+and `regions`. In this case, the two inputs are the `peaks` and `transcripts`
+which we prepared earlier. The output of this function is a `GRanges`, the
+same as the input `peaks`, with three additional metadata columns:
+`assigned_region`, `distance` and `peak_score`.
+
+```{r associated_peaks}
+# get associated peaks
+ap <- associated_peaks(real_peaks, real_transcripts, 'ID')
+ap
+```
+
+`direct_targets` also takes as arguments two `GRanges` objects; `peaks` and
+`regions`. Two other arguments are required when the user desires to rank the
+target genes based on both the regulatory potential and the differential
+expression statistics. The arguments are `regions_col` and `stats_col`, these
+should be strings for the columns names in the metadata of the `regions`
+object for the gene names/symbols and the chosen statistics to rank the genes.
+The output of this function is a `GRanges`, the same as the input `regions`,
+with four additional metadata columns: `score`, `stat`, `score_rank`,
+`stat_rank` and `rank`. These correspond to the regulatory potential gene
+score, the chosen statistics, the rank of each and the final rank product. 
+The values in the `rank` column are the product of the two ranks, the less 
+the value the more likely a region/gene is a direct target. The direction of
+the regulation can be infered from the sign of the `stat` column.
+
+```{r direct_tragets}
+# get direct targets
+dt <- direct_targets(real_peaks, real_transcripts, 'ID', 't')
+dt
+```
+
+The following code shows the relation between the peak distance and the peak
+score (left), the genes t-statitics and the gene regulatory potentials
+(middle), and the emperical cumlative distribution function (ECDF) of the
+regulatory potential ranks of the up, down and non-regulated genes (right) .
+
+```{r show_relation,fig.align='center',fig.width=7,fig.height=3}
+par(mfrow = c(1, 3))
+
+# show peak distance vs score
+plot(ap$distance, ap$peak_score,
+     pch = 19, cex = .5, 
+     xlab = 'Peak Distance', ylab = 'Peak Score')
+abline(v = 0, lty = 2, col = 'gray')
+
+# show gene stat vs score
+plot(dt$stat, dt$score,
+     pch = 19, cex = .5, 
+     xlim = c(-35, 35),
+     xlab = 'Gene t-stats', ylab = 'Gene Score')
+abline(v = 0, lty = 2, col = 'gray')
+
+# show gene regulatory potential ecdf
+groups <- c('Down', 'None', 'Up')
+colors <- c('darkgreen', 'gray', 'darkred')
+
+fold_change <- cut(dt$logFC,
+                   breaks = c(min(dt$logFC), -.5, .5, max(dt$logFC)),
+                   labels = groups)
+
+plot_predictions(dt$score_rank,
+                 fold_change,
+                 colors,
+                 groups,
+                 xlab = 'Gene Regulatory Potential Rank',
+                 ylab = 'ECDF')
+```
+
+The graph shows that more of the up-regulated transcripts are ranking higher
+than the down- and none-regulated genes. We can test whether the distribution
+function of the two regulated group are drawn from the same distribution of 
+the none-regulated transcripts.
+
+```{r test_groups}
+# test up-regulated transcripts are not random
+test_predictions(dt$score_rank,
+                 group = fold_change,
+                 compare = c('Up', 'None'),
+                 alternative = 'greater')
+
+# test down-regulated transcripts are not random
+test_predictions(dt$score_rank,
+                 group = fold_change,
+                 compare = c('Down', 'None'),
+                 alternative = 'greater')
+```
+
+The names of the top regulated transcript by rank, gene name and its associated
+peaks.
+
+```{r top_gene_transcript}
+# show the top regulated transcript, gene name and its associated peaks
+top_trans <- unique(dt$ID[dt$rank == min(dt$rank)])
+top_trans
+
+unique(dt$name2[dt$ID == top_trans])
+unique(ap$peak_name[ap$assigned_region == top_trans])
+```
+
+## Advantages of the R implementation
+
+The `target` package implements the [BETA](http://cistrome.org/BETA/) algorithm
+for detecting the associated peaks of DNA-binding proteins or histone markers
+from ChIP data. In addition, when genetic or chemical perturbation data is 
+provided the algorithm can predict direct target regions of the protein or the
+marker by integrating the binding and the expression data. The implementation of
+the algorithm in R provide a few advantages:
+
+* `target` leverages the Bioconductor data structures such as `GRanges` and 
+`DataFrame` to provide flexible containers which can be manipulated and updated
+to prepare the input data. The containers are also faster to perform merge and
+selection operations on.
+
+* In the R package, the input data are limited to the peaks and the regions
+expression data. This gives the users more control. For example, regions can
+be defined as genes, transcripts, promoters of differentially expressed 
+regions. Similarly, the expression data can be any signed statistics that 
+corresponds to the defined regions. Finally, any old or recent can be used
+to define genomic coordinates without being limited to built in reference
+genomes.
+
+* The same R functions can be used to predict the combined function of two
+factors in the same condition. Predicting cooperative or competitive effect
+of two factors is described in `vignette('extend-target')`.
+
+## References
+
+Wang S, Sun H, Ma J, et al. Target analysis by integration of transcriptome and
+ChIP-seq data with BETA. Nat Protoc. 2013;8(12):2502–2515. 
+doi:10.1038/nprot.2013.150
+
+Wang Q, Li W, Liu XS, et al. A hierarchical network of transcription factors 
+governs androgen receptor-dependent prostate cancer growth. Mol Cell. 
+2007;27(3):380–392. doi:10.1016/j.molcel.2007.05.041
+
+
+```{r session_info}
+sessionInfo()
+```
+
