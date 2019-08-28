@@ -1,3 +1,6 @@
+[![Travis build status](https://travis-ci.org/MahShaaban/target.svg?branch=master)](https://travis-ci.org/MahShaaban/target)
+[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/MahShaaban/target?branch=master&svg=true)](https://ci.appveyor.com/project/MahShaaban/target)
+[![Codecov test coverage](https://codecov.io/gh/MahShaaban/target/branch/master/graph/badge.svg)](https://codecov.io/gh/MahShaaban/target?branch=master)
 
 # target
 

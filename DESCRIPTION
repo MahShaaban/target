@@ -3,13 +3,13 @@ Type: Package
 Title: Predict Combined Function of Transcription Factors
 Version: 0.1.0
 Authors@R: person("Mahmoud", "Ahmed",
-  email = "mahmoud.s.fahmy@students.kasralainy.edu.eg",
-  role = c("aut", "cre"))
+    email = "mahmoud.s.fahmy@students.kasralainy.edu.eg",
+    role = c("aut", "cre"))
 Description: Implement the BETA algorithm for infering direct target
-  genes from DNA-binding and perturbation expression data Wang et al. (2013)
-  <doi: 10.1038/nprot.2013.150>. Extend the algorithm to predict the combined
-  function of two DNA-binding elements from comprable binding and expression 
-  data.
+    genes from DNA-binding and perturbation expression data Wang et al. (2013)
+    <doi: 10.1038/nprot.2013.150>. Extend the algorithm to predict the combined
+    function of two DNA-binding elements from comprable binding and expression 
+    data.
 URL: https://github.com/MahShaaban/target
 BugReports: https://github.com/MahShaaban/target/issues
 License: GPL-3
@@ -17,20 +17,22 @@ Encoding: UTF-8
 LazyData: true
 Depends: R (>= 2.10)
 Imports:
-  BiocGenerics,
-  GenomicRanges,
-  IRanges,
-  matrixStats,
-  stats,
-  graphics,
-  shiny
+    BiocGenerics,
+    GenomicRanges,
+    IRanges,
+    matrixStats,
+    stats,
+    graphics,
+    shiny
 Suggests: 
-  testthat (>= 2.1.0),
-  knitr,
-  rmarkdown,
-  shinytest,
-  shinyBS
+    testthat (>= 2.1.0),
+    knitr,
+    rmarkdown,
+    shinytest,
+    shinyBS,
+    covr
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1
-biocViews: Software,
+biocViews: 
+    Software,
     StatisticalMethod
