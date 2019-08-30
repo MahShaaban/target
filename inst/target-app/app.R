@@ -11,6 +11,7 @@ require(TxDb.Mmusculus.UCSC.mm9.knownGene)
 require(target)
 require(dplyr)
 require(readr)
+#require(markdown)
 
 # define ui -------------------------------------------------------------------
 ui <- navbarPage(
@@ -269,7 +270,8 @@ ui <- navbarPage(
     # Tutorial Page
     tabPanel(
         'Tutorial',
-        includeMarkdown('./tutorial/tutorial.md')
+#        includeMarkdown('./tutorial/tutorial.md')
+         tags$h1('Tutorial')
     )
 )
 
