@@ -1,6 +1,6 @@
 {
   "input": {
-    "distance": 100000,
+    "distance": 100,
     "expression": {
       "name": [
         "AR_diff_expr.tsv.gz"
@@ -15,6 +15,7 @@
         "0.gz"
       ]
     },
+    "expression_columns": "All",
     "genome": {
       "name": [
         "hg19.refseq.gz"
@@ -29,10 +30,14 @@
         "0.gz"
       ]
     },
+    "genome_columns": "All",
     "genome_id": "Custome",
     "genome_id_col": "seqnames",
     "genome_id_col-selectized": "",
     "genome_id-selectized": "",
+    "peak_columns": "All",
+    "peak_id_col": "seqname",
+    "peak_id_col-selectized": "",
     "peaks": {
       "name": [
         "3656_peaks.bed.gz"
@@ -7131,6 +7136,7 @@
     "plot_group": "dt()",
     "plot_group-selectized": "",
     "plot_labels": "down,none,up",
+    "plot_main": "Predicted Function",
     "plot_rank": "dt()",
     "plot_rank-selectized": "",
     "plot_xlab": "Regulatory Potential",
