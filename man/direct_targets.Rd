@@ -2,7 +2,7 @@
 % Please edit documentation in R/functions.R
 \name{direct_targets}
 \alias{direct_targets}
-\title{Predicts direct targets}
+\title{Predict direct targets}
 \usage{
 direct_targets(peaks, regions, regions_col, stats_col, base = 1e+05)
 }
@@ -27,13 +27,11 @@ between them, score each peak and region and calculate rank products of the
 regions.
 }
 \examples{
-\dontrun{
 # load peaks and transcripts data
 data("real_peaks")
 data("real_transcripts")
 
 # direct targets
 dt <- direct_targets(real_peaks, real_transcripts, 'name2', 't')
-}
 
 }

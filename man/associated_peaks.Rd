@@ -2,7 +2,7 @@
 % Please edit documentation in R/functions.R
 \name{associated_peaks}
 \alias{associated_peaks}
-\title{Predicts associated peaks}
+\title{Predict associated peaks}
 \usage{
 associated_peaks(peaks, regions, regions_col, base = 1e+05)
 }
@@ -24,13 +24,11 @@ This function selects overlapping peaks and regions, calculates the distance
 between them and score each peak.
 }
 \examples{
-\dontrun{
 # load peaks and transcripts data
 data("real_peaks")
 data("real_transcripts")
 
 # associated peaks
 ap <- associated_peaks(real_peaks, real_transcripts, 'name2')
-}
 
 }

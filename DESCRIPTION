@@ -15,12 +15,13 @@ BugReports: https://github.com/MahShaaban/target/issues
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-Depends: R (>= 2.10)
+Depends: R (>= 3.6)
 Imports:
     BiocGenerics,
     GenomicRanges,
     IRanges,
     matrixStats,
+    methods,
     stats,
     graphics,
     shiny
@@ -35,4 +36,5 @@ VignetteBuilder: knitr
 RoxygenNote: 6.1.1
 biocViews: 
     Software,
-    StatisticalMethod
+    StatisticalMethod,
+    Transcription

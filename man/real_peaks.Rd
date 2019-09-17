@@ -6,7 +6,8 @@
 \title{AR peaks in LNCaP cell line}
 \format{A \code{\link[GenomicRanges]{GRanges}}}
 \source{
-\url{https://github.com/suwangbio/BETA/blob/master/BETA_test_data/3656_peaks.bed}
+\url{https://github.com/suwangbio/BETA/blob/master/BETA_test_data/
+3656_peaks.bed}
 }
 \usage{
 real_peaks
@@ -15,7 +16,6 @@ real_peaks
 Androgen recepor peaks from ChIP-Seq experiment in the LNCaP cell line.
 }
 \examples{
-\dontrun{
 # load data
 data('real_peaks')
 
@@ -24,7 +24,6 @@ system.file('extdata', '3656_peaks.bed.gz', package = 'target')
 
 # locate the source code for preparing the data
 system.file('extdata', 'make-data.R', package = 'target')
-}
 }
 \seealso{
 \code{\link{real_transcripts}}

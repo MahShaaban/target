@@ -6,6 +6,9 @@
 \usage{
 target_app()
 }
+\value{
+Runs the shiny app
+}
 \description{
 Run the shiny App
 }

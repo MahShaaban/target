@@ -16,13 +16,11 @@ The transcripts chromosome 1 of the mm10 mouse genome with randomly singed
 statistics assigned to each.
 }
 \examples{
-\dontrun{
 # load data
 data('sim_transcripts')
 
 # locate the source code for preparing the data
 system.file('extdata', 'make-data.R', package = 'target')
-}
 }
 \seealso{
 \code{\link{real_transcripts}}

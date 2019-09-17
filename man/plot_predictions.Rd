@@ -15,7 +15,7 @@ plot_predictions(rank, group, colors, labels, ...)
 
 \item{labels}{A character vector of length equal the unique values in groups}
 
-\item{...}{Other arguments passed to plot}
+\item{...}{Other arguments passed to points}
 }
 \value{
 NULL.

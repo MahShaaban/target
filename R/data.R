@@ -7,10 +7,10 @@
 #' @seealso \code{\link{real_transcripts}}
 #' @seealso \code{\link{sim_peaks}}
 #'
-#' @source \url{https://github.com/suwangbio/BETA/blob/master/BETA_test_data/3656_peaks.bed}
+#' @source \url{https://github.com/suwangbio/BETA/blob/master/BETA_test_data/
+#' 3656_peaks.bed}
 #'
 #' @examples
-#' \dontrun{
 #' # load data
 #' data('real_peaks')
 #'
@@ -19,7 +19,6 @@
 #'
 #' # locate the source code for preparing the data
 #' system.file('extdata', 'make-data.R', package = 'target')
-#' }
 'real_peaks'
 
 #' Differential expression of DHT treated LNCaP cell line
@@ -34,11 +33,12 @@
 #' @seealso \code{\link{real_peaks}}
 #' @seealso \code{\link{sim_transcripts}}
 #'
-#' @source \url{https://github.com/suwangbio/BETA/blob/master/BETA_test_data/AR_diff_expr.xls}
-#' @source \url{https://github.com/suwangbio/BETA/blob/master/BETA_1.0.7/BETA/references/hg19.refseq}
+#' @source \url{https://github.com/suwangbio/BETA/blob/master/BETA_test_data/
+#' AR_diff_expr.xls}
+#' @source \url{https://github.com/suwangbio/BETA/blob/master/BETA_1.0.7/BETA/
+#' references/hg19.refseq}
 #'
 #' @examples
-#' \dontrun{
 #' # load data
 #' data('real_transcripts')
 #'
@@ -48,7 +48,6 @@
 #'
 #' # locate the source code for preparing the data
 #' system.file('extdata', 'make-data.R', package = 'target')
-#' }
 'real_transcripts'
 
 #' Simulated peaks
@@ -62,13 +61,11 @@
 #' @seealso \code{\link{sim_transcripts}}
 #'
 #' @examples
-#' \dontrun{
 #' # load data
 #' data('sim_peaks')
 #'
 #' # locate the source code for preparing the data
 #' system.file('extdata', 'make-data.R', package = 'target')
-#' }
 'sim_peaks'
 
 #' Simulated transcripts
@@ -81,11 +78,9 @@
 #' @seealso \code{\link{sim_transcripts}}
 #'
 #' @examples
-#' \dontrun{
 #' # load data
 #' data('sim_transcripts')
 #'
 #' # locate the source code for preparing the data
 #' system.file('extdata', 'make-data.R', package = 'target')
-#' }
 'sim_transcripts'

@@ -13,13 +13,11 @@ is randomly generated peaks with random distances from the transcripts start
 sites (TSS) of chromosome 1 of the mm10 mouse genome.
 }
 \examples{
-\dontrun{
 # load data
 data('sim_peaks')
 
 # locate the source code for preparing the data
 system.file('extdata', 'make-data.R', package = 'target')
-}
 }
 \seealso{
 \code{\link{real_peaks}}

@@ -6,9 +6,11 @@
 \title{Differential expression of DHT treated LNCaP cell line}
 \format{A \code{\link[GenomicRanges]{GRanges}}}
 \source{
-\url{https://github.com/suwangbio/BETA/blob/master/BETA_test_data/AR_diff_expr.xls}
+\url{https://github.com/suwangbio/BETA/blob/master/BETA_test_data/
+AR_diff_expr.xls}
 
-\url{https://github.com/suwangbio/BETA/blob/master/BETA_1.0.7/BETA/references/hg19.refseq}
+\url{https://github.com/suwangbio/BETA/blob/master/BETA_1.0.7/BETA/
+references/hg19.refseq}
 }
 \usage{
 real_transcripts
@@ -20,7 +22,6 @@ identifiers were used to merge the data.frame with the transcript
 coordinates from the hg19 reference genome.
 }
 \examples{
-\dontrun{
 # load data
 data('real_transcripts')
 
@@ -30,7 +31,6 @@ system.file('extdata', 'hg19.refseq', package = 'target')
 
 # locate the source code for preparing the data
 system.file('extdata', 'make-data.R', package = 'target')
-}
 }
 \seealso{
 \code{\link{real_peaks}}

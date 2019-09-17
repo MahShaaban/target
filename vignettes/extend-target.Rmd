@@ -1,10 +1,10 @@
 ---
-title: "Using `target` to predict cooperative and competitive binding"
+title: "Using `target` to predict combined binding"
 author: "Mahmoud Ahmed"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Using target to predict cooperative and competitive binding}
+  %\VignetteIndexEntry{Using target to predict combined binding}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -111,11 +111,11 @@ plot_profiles(sim_peaks,
 
 The changes introduced above are illustrated in the right upper quadrant of the
 scatter plot. The predicted functions of the two factors are similar, as shown
-by cumulative distribution function of the rank product of their targets. Finally,
-When the targets are predicted based on the two statistics combined, the sign of
-the statistics product determines the direction of the factor interactions. Here,
-more higher ranking transcripts had positive/red/cooperative change associated 
-with the two factors.
+by cumulative distribution function of the rank product of their targets. 
+Finally, when the targets are predicted based on the two statistics combined, 
+the sign of the statistics product determines the direction of the factor
+interactions. Here, more higher ranking transcripts had positive/red/
+cooperative change associated with the two factors.
 
 ### Competitive factors example
 
