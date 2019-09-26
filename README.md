@@ -11,3 +11,20 @@ and perturbation expression data Wang et al. (2013). Extend the algorithm to
 predict the combined function of two DNA-binding elements from comprable 
 binding and expression data.
 
+# Installation
+
+The `target` package can be installed from Bioconductor using `BiocManager`.
+
+```{r install_biocmanager,eval=FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("target")
+```
+
+# Citation
+
+For citing the package use:
+
+```{r citation, warning=FALSE}
+# citing the package
+citation("target")

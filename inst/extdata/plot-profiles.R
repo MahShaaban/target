@@ -20,15 +20,18 @@ plot_profiles <- function(peaks, transcripts, n, change) {
              main = 'Before introducing change',
              label = 'A')
 
-  # introduce change in a n transcripts
-  add_change <- function(x, n, fac) {
-    ind <- sample(1:length(x), size = n)
-    x[ind] <- (abs(as.numeric(x)[ind]) * fac)
-    x
-  }
+  # select transcripts to change and shift
+  ap <- associated_peaks(peaks, transcripts, 'tx_id')
+  nearby <- unique(ap$assigned_region[order(abs(ap$distance))[1:n]])
+  ind <- transcripts$tx_id %in% nearby
 
-  transcripts$stat1 <- add_change(transcripts$stat1, n = n, fac = change[1])
-  transcripts$stat2 <- add_change(transcripts$stat2, n = n, fac = change[2])
+  transcripts$stat1[ind] <- ifelse(transcripts$stat1[ind] > 0,
+                                   transcripts$stat1[ind] * change[1],
+                                   transcripts$stat1[ind])
+
+  transcripts$stat2[ind] <- ifelse(transcripts$stat2[ind] > 0,
+                                   transcripts$stat2[ind] * change[2],
+                                   transcripts$stat2[ind])
 
   # scatter of statistics after adding positive change
   plot_stats(transcripts$stat1,
@@ -58,13 +61,14 @@ plot_profiles <- function(peaks, transcripts, n, change) {
             breaks = quantile(dt1$stat1, c(0, .25, .75, 1)),
             labels = c('Down', 'None', 'Up'))
 
-  plot_predictions(dt1$rank,
+  plot_predictions(dt1$score_rank,
                    group = g1,
                    colors = c('darkgreen', 'gray', 'darkred'),
                    labels = c('Down', 'None', 'Up'),
                    xlab = 'Regulatory Potential',
                    ylab = 'ECDF',
-                   main = 'Predicted function of factor one')
+                   main = 'Predicted function of factor one',
+                   cex = .5)
 
   # predicted function of factor two
   dt2 <- direct_targets(peaks,
@@ -78,13 +82,14 @@ plot_profiles <- function(peaks, transcripts, n, change) {
             breaks = quantile(dt2$stat2, c(0, .25, .75, 1)),
             labels = c('Down', 'None', 'Up'))
 
-  plot_predictions(dt2$rank,
+  plot_predictions(dt2$score_rank,
                    group = g2,
                    colors = c('darkgreen', 'gray', 'darkred'),
                    labels = c('Down', 'None', 'Up'),
                    xlab = 'Regulatory Potential',
                    ylab = 'ECDF',
-                   main = 'Predicted function of factor two')
+                   main = 'Predicted function of factor two',
+                   cex = .5)
 
   # predicted function of the combinded effect of the two factors
   dt <- direct_targets(peaks,
@@ -98,13 +103,14 @@ plot_profiles <- function(peaks, transcripts, n, change) {
             breaks = quantile(dt$stat, c(0, .25, .75, 1)),
             labels = c('Competitive', 'None', 'Cooperative'))
 
-  plot_predictions(dt$rank,
+  plot_predictions(dt$score_rank,
                    group = g,
                    colors = c('darkgreen', 'gray', 'darkred'),
                    labels = c('Competitive', 'None', 'Cooperative'),
                    xlab = 'Regulatory Potential',
                    ylab = 'ECDF',
-                   main = 'Predicted function of factor two')
+                   main = 'Predicted function of factor two',
+                   cex = .5)
 
-  return(NULL)
+  invisible(NULL)
 }

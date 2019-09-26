@@ -83,12 +83,13 @@ data("sim_transcripts")
 ```
 
 To help visualize these cases, a plotting function `plot_profiles` was 
-constructed to introduce the changes `change` on `n` number of transcripts. 
-The source code for the function is available in `inst/extdata/plot-profiles.R`
-which we source to use here. The output of the function is a series of plots to
-visualize the statistics of the two factors before and after introducing the 
-changes, the peaks distances and scores and the predicted functions of the 
-factors individually and combined.
+constructed to introduce the changes `change` in the statistics of the 
+transcripts near the `n` number of peaks. The source code for the function is 
+available in `inst/extdata/plot-profiles.R` which we source to use here. 
+The output of the function is a series of plots to visualize the statistics of
+the two factors before and after introducing the changes, the peaks distances 
+and scores and the predicted functions of the factors individually and 
+combined.
 
 ```{r define_function}
 # source the plotting function
@@ -98,20 +99,21 @@ source(system.file('extdata', 'plot-profiles.R', package = 'target'))
 ### Cooperative factors example
 
 The first two inputs to the plotting function is the simulated peaks and 
-transcripts. We chose to introduce similar changes to the statistics of the 
-two factors on a 1000 transcript.
+transcripts. We chose to introduce positive changes to the statistics of the
+transcripts with the top 5000 nearby peaks of the two factors.
+
 
 ```{r cooperative_example,fig.align='center',fig.width=7, fig.height=6}
 # simulate and plot cooperative factors
 plot_profiles(sim_peaks,
               sim_transcripts,
-              n = 1000,
-              change = c(1, 2))
+              n = 5000,
+              change = c(3, 3))
 ```
 
 The changes introduced above are illustrated in the right upper quadrant of the
 scatter plot. The predicted functions of the two factors are similar, as shown
-by cumulative distribution function of the rank product of their targets. 
+by distribution function of the regulatory potential of their targets. 
 Finally, when the targets are predicted based on the two statistics combined, 
 the sign of the statistics product determines the direction of the factor
 interactions. Here, more higher ranking transcripts had positive/red/
@@ -119,16 +121,17 @@ cooperative change associated with the two factors.
 
 ### Competitive factors example
 
-Similar to the example above, we chose to introduce change two a 1000 
-transcript. To simulate the competitive conditions of the two factors, the 
-changes have opposite signs.
+Similar to the example above, we chose to introduce change to the 
+statistics of the transcripts with nearby peaks for the two factors. 
+To simulate the competitive conditions of the two factors, the changes have 
+opposite signs.
 
 ```{r competitive_example,fig.align='center',fig.width=7, fig.height=6}
 # simulate and plot competitve factors
 plot_profiles(sim_peaks,
               sim_transcripts,
-              n = 1000,
-              change = c(1, -3))
+              n = 5000,
+              change = c(3, -3))
 ```
 
 By contrast, the changes associated with each factor are opposite in sign,
