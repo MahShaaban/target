@@ -2,7 +2,7 @@
 #'
 #' Androgen recepor peaks from ChIP-Seq experiment in the LNCaP cell line.
 #'
-#' @format A \code{\link[GenomicRanges]{GRanges}}
+#' @format A \code{GRanges}
 #'
 #' @seealso \code{\link{real_transcripts}}
 #' @seealso \code{\link{sim_peaks}}
@@ -28,7 +28,7 @@
 #' identifiers were used to merge the data.frame with the transcript
 #' coordinates from the hg19 reference genome.
 #'
-#' @format A \code{\link[GenomicRanges]{GRanges}}
+#' @format A \code{GRanges}
 #'
 #' @seealso \code{\link{real_peaks}}
 #' @seealso \code{\link{sim_transcripts}}
@@ -55,7 +55,7 @@
 #' is randomly generated peaks with random distances from the transcripts start
 #' sites (TSS) of chromosome 1 of the mm10 mouse genome.
 #'
-#' @format A \code{\link[GenomicRanges]{GRanges}}
+#' @format A \code{GRanges}
 #'
 #' @seealso \code{\link{real_peaks}}
 #' @seealso \code{\link{sim_transcripts}}
@@ -72,7 +72,7 @@
 #' The transcripts chromosome 1 of the mm10 mouse genome with randomly singed
 #' statistics assigned to each.
 #'
-#' @format A \code{\link[GenomicRanges]{GRanges}}
+#' @format A \code{GRanges}
 #'
 #' @seealso \code{\link{real_transcripts}}
 #' @seealso \code{\link{sim_transcripts}}
