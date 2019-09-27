@@ -6,7 +6,7 @@
 \title{Simulated transcripts
 The transcripts chromosome 1 of the mm10 mouse genome with randomly singed
 statistics assigned to each.}
-\format{A \code{\link[GenomicRanges]{GRanges}}}
+\format{A \code{GRanges}}
 \usage{
 sim_transcripts
 }

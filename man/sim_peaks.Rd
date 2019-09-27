@@ -4,7 +4,7 @@
 \name{sim_peaks}
 \alias{sim_peaks}
 \title{Simulated peaks}
-\format{A \code{\link[GenomicRanges]{GRanges}}}
+\format{A \code{GRanges}}
 \usage{
 sim_peaks
 }

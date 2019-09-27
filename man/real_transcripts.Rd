@@ -4,7 +4,7 @@
 \name{real_transcripts}
 \alias{real_transcripts}
 \title{Differential expression of DHT treated LNCaP cell line}
-\format{A \code{\link[GenomicRanges]{GRanges}}}
+\format{A \code{GRanges}}
 \source{
 \url{https://github.com/suwangbio/BETA/blob/master/BETA_test_data/
 AR_diff_expr.xls}
