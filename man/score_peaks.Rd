@@ -15,7 +15,7 @@ score_peaks(distance, base)
 A vector of integers
 }
 \description{
-For internal use only and not intended to be used by the end users.
+Calculate the peak score based on the distance to a region of interest.
 }
 \examples{
 library(IRanges)

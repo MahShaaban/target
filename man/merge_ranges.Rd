@@ -15,7 +15,7 @@ merge_ranges(peaks, regions)
 A DataFrame
 }
 \description{
-For internal use only and not intended to be used by the end users.
+Merge two GRanges objects by overlaps
 }
 \examples{
 library(IRanges)

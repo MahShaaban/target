@@ -17,7 +17,7 @@ rank_product(region_score, region_stat, region_id)
 A vector of numerics
 }
 \description{
-For internal use only and not intended to be used by the end users.
+Calculate the rank products of the rank of the distances and the statistics.
 }
 \examples{
 library(IRanges)

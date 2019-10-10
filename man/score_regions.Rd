@@ -15,7 +15,7 @@ score_regions(peak_score, region_id)
 A vector of numerics
 }
 \description{
-For internal use only and not intended to be used by the end users.
+Calculate the region score based on the distance to their assigned peaks.
 }
 \examples{
 library(IRanges)

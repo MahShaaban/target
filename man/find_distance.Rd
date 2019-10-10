@@ -17,7 +17,7 @@ find_distance(peaks, regions, how = "center")
 A vector of integers
 }
 \description{
-For internal use only and not intended to be used by the end users.
+Calculate the distance between the elements of two GRanges objects.
 }
 \examples{
 library(IRanges)

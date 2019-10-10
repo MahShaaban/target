@@ -1,6 +1,6 @@
 #' Merge peaks and regions GRanges
 #'
-#' For internal use only and not intended to be used by the end users.
+#' Merge two GRanges objects by overlaps
 #'
 #' @param peaks A GRanges object
 #' @param regions A GRanges object
@@ -27,7 +27,7 @@ merge_ranges <- function(peaks, regions) {
 
 #' Find the distance between peaks and regions
 #'
-#' For internal use only and not intended to be used by the end users.
+#' Calculate the distance between the elements of two GRanges objects.
 #'
 #' @inheritParams merge_ranges
 #' @param how A character string, default 'center'
@@ -76,7 +76,7 @@ find_distance <- function(peaks, regions, how = 'center') {
 
 #' Calculate peak scores
 #'
-#' For internal use only and not intended to be used by the end users.
+#' Calculate the peak score based on the distance to a region of interest.
 #'
 #' @param distance A vector of integers
 #' @param base An integer to calculate distances relative to.
@@ -111,7 +111,7 @@ score_peaks <- function(distance, base) {
 
 #' Calculate region scores
 #'
-#' For internal use only and not intended to be used by the end users.
+#' Calculate the region score based on the distance to their assigned peaks.
 #'
 #' @param peak_score  A vector of integers
 #' @param region_id  A vector of character
@@ -161,7 +161,7 @@ score_regions <- function(peak_score, region_id) {
 
 #' Calculate the regions rank products
 #'
-#' For internal use only and not intended to be used by the end users.
+#' Calculate the rank products of the rank of the distances and the statistics.
 #'
 #' @param region_score A vector of numerics
 #' @param region_stat  A vector of numerics
@@ -191,7 +191,7 @@ rank_product <- function(region_score, region_stat, region_id) {
     }
 
     if (is.list(region_stat)) {
-        if (!all(unlist(lapply(region_stat, is.numeric)))) {
+        if (!all(vapply(region_stat, is.numeric, logical(1)))) {
             stop('region_score should be a numeric or a list of numerics.')
         }
 
