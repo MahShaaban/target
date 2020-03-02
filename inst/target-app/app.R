@@ -34,15 +34,17 @@ ui <- navbarPage(
                 tags$p("Peaks file from ChIP experiment."),
                 fileInput(
                     'peaks',
-                    label = 'Upload File'
-                    ),
+                    label = 'Upload File',
+                    accept = 'tsv',
+                    placeholder = 'sim_peaks.tsv'),
                 bsTooltip('peaks',
                           'Tab separated text file with at least three columns.',
                           'top', options = list(container = "body")),
                 selectInput(
                     'peak_id_col',
                     label = 'Name Column',
-                    choices = 'Pending'
+                    choices = 'peak_name',
+                    selected = 'peak_name'
                 ),
                 bsTooltip('peak_id_col',
                           'Name of the column in the uploaded file that contains peak names.',
@@ -53,7 +55,7 @@ ui <- navbarPage(
                     min = 0,
                     max = 500,
                     value = 100
-                    ),
+                ),
                 bsTooltip('distance',
                           'Distance in kb to get peaks within.',
                           'top', options = list(container = "body"))
@@ -68,16 +70,19 @@ ui <- navbarPage(
                 tags$p("Statistics from purturbed expression."),
                 fileInput(
                     'expression',
-                    label = 'Upload File'
-                    ),
+                    label = 'Upload File',
+                    accept = 'tsv',
+                    placeholder = 'sim_transcripts.tsv'
+                ),
                 bsTooltip('expression',
                           'Tab separated text file with at least three columns.',
                           'top', options = list(container = "body")),
                 selectInput(
                     'region_id',
                     label = 'Name Column',
-                    choices = 1
-                    ),
+                    choices = 'tx_id',
+                    selected = 'tx_id'
+                ),
                 bsTooltip('region_id',
                           'Name of the column in the uploaded file that contains region IDs.',
                           'top', options = list(container = "body")),
@@ -85,21 +90,23 @@ ui <- navbarPage(
                     'type',
                     label = 'Number of Factors',
                     choices = c('One', 'Two'),
-                    selected = 'One',
+                    selected = 'Two',
                     inline = TRUE
-                    ),
+                ),
                 selectInput(
                     'stat_id',
                     label = 'Statistics Column',
-                    choices = 'Pending'
-                    ),
+                    choices = 'stat1',
+                    selected = 'stat1'
+                ),
                 bsTooltip('stat_id',
                           'Name of the column in the uploaded file that contains region statistics.',
                           'top', options = list(container = "body")),
                 selectInput(
                     'stat_id2',
                     label = 'Statistics Column (second factor)',
-                    choices = 'Pending'
+                    choices = 'stat2',
+                    selected = 'stat2'
                 ),
                 bsTooltip('stat_id2',
                           'Name of the column in the uploaded file that contains region statistics.',
@@ -114,15 +121,18 @@ ui <- navbarPage(
                 tags$p('Genomic coordinates of the regions.'),
                 fileInput(
                     'genome',
-                    label = 'Upload File'
-                    ),
+                    label = 'Upload File',
+                    accept = 'tsv',
+                    placeholder = 'sim_genome.tsv'
+                ),
                 bsTooltip('genome',
                           'Tab separated text file with at least four columns.',
                           'top', options = list(container = "body")),
                 selectInput(
                     'genome_id_col',
                     label = 'Name Column',
-                    choices = 1
+                    choices = 'tx_id',
+                    selected = 'tx_id'
                 ),
                 bsTooltip('genome_id_col',
                           'Name of the column in the uploaded file that contains region IDs.',
@@ -130,7 +140,8 @@ ui <- navbarPage(
                 selectInput(
                     'genome_id',
                     label = '(or) Select Genome',
-                    choices = c('Custome', 'mm10', 'mm9', 'hg19', 'hg38')
+                    choices = c('Custome', 'mm10', 'mm9', 'hg19', 'hg38'),
+                    selected = 'Custome'
                 ),
                 bsTooltip('genome_id',
                           'Alternative built-in genomes.',
@@ -198,7 +209,7 @@ ui <- navbarPage(
                     )
                 ),
                 tags$br(),
-                 dataTableOutput('genome_tab')),
+                dataTableOutput('genome_tab')),
             # Associated peaks, and a download button
             tabPanel(
                 'Associated Peaks',
@@ -224,18 +235,18 @@ ui <- navbarPage(
                         selectInput(
                             'plot_rank',
                             'Rank Column',
-                            choices = 'Pending',
-                            selected = 'score_rank'),
+                            choices = 'score',
+                            selected = 'score'),
                         tags$hr(),
                         selectInput(
                             'plot_group',
                             'Grouping Column',
-                            choices = 'Pending',
+                            choices = 'stat',
                             selected = 'stat'),
                         textInput(
                             'plot_breaks',
-                            'Breaks',
-                            value = '-100,-.5,.5,100'),
+                            'Breaks (Quantiles)',
+                            value = '0,.25,.75,1'),
                         textInput(
                             'plot_colors',
                             'Colors',
@@ -243,7 +254,7 @@ ui <- navbarPage(
                         textInput(
                             'plot_labels',
                             'Labels',
-                            value = 'down,none,up'),
+                            value = 'comp,none,coop'),
                         tags$hr(),
                         textInput(
                             'plot_main',
@@ -270,8 +281,7 @@ ui <- navbarPage(
     # Tutorial Page
     tabPanel(
         'Tutorial',
-#        includeMarkdown('./tutorial/tutorial.md')
-         tags$h1('Tutorial')
+        includeMarkdown('./tutorial/tutorial.md')
     )
 )
 
@@ -283,146 +293,114 @@ server <- function(input, output, session) {
     # 2. expression
     # 3. genome
 
+    # define a loading function
+    load_file <- function(input, demo) {
+        path <- ifelse(!is.null(input), input, demo)
+        read_tsv(path)
+    }
+
     # load peaks file
     peaks <- reactive({
-        if (is.null(input$peaks)) {
-            return(NULL)
-        } else {
-            read_tsv(input$peaks$datapath)
-        }
-    })
-
-    peak_cols <- reactive({
-        if(!is.null(input$peaks)) {
-            names(peaks())
-        } else {
-            return(NULL)
-        }
+        load_file(input$peaks$datapath, 'sim_peaks.tsv')
     })
 
     # load expression file
     expression <- reactive({
-        if (is.null(input$expression)) {
-            return(NULL)
-        } else {
-            read_tsv(input$expression$datapath)
-        }
-    })
-
-    # get column names of the expression files
-    expression_cols <- reactive({
-        if(!is.null(input$expression)) {
-            names(expression())
-        } else {
-            'Pending'
-        }
+        load_file(input$expression$datapath, 'sim_transcripts.tsv')
     })
 
     # load genome file, if custome
     # or else, load genome from txdb
 
-    # define helper function
-    # takes, txdb name and distance
-    # returns, data.frame of distances within transcripts of txdb
-    get_regions <- function(txdb, distance) {
-        # get columns in txdb
-        txdb_columns <- columns(txdb)
+    # define a helper function
+    get_regions <- function(txdb) {
+        transcripts(txdb, columns = columns(txdb))
+    }
 
-        # get transcripts
-        trans <- transcripts(txdb, columns = txdb_columns)
+    genome <- reactive({
+        trans <- switch(
+            input$genome_id,
+            'mm10' = get_regions(TxDb.Mmusculus.UCSC.mm10.knownGene),
+            'mm9' = get_regions(TxDb.Mmusculus.UCSC.mm9.knownGene),
+            'hg19' = get_regions(TxDb.Hsapiens.UCSC.hg19.knownGene),
+            'hg38' = get_regions(TxDb.Hsapiens.UCSC.hg38.knownGene),
+            'Custome' = {
+                trans <- load_file(input$genome$datapath, 'sim_genome.tsv')
+                makeGRangesFromDataFrame(trans,
+                                         keep.extra.columns = TRUE)
+            }
+        )
 
         # get regions
-        as.data.frame(
+        as_tibble(
             promoters(trans,
-                      downstream = distance * 1000,
-                      upstream = distance * 1000)
+                      upstream = input$distance * 1000,
+                      downstream = input$distance * 1000)
         )
-    }
-    genome <- reactive({
-        switch(input$genome_id,
-               'mm10' = {get_regions(TxDb.Mmusculus.UCSC.mm10.knownGene, input$distance)},
-               'mm9' = {get_regions(TxDb.Mmusculus.UCSC.mm9.knownGene, input$distance)},
-               'hg19' = {get_regions(TxDb.Hsapiens.UCSC.hg19.knownGene, input$distance)},
-               'hg38' = {get_regions(TxDb.Hsapiens.UCSC.hg38.knownGene, input$distance)},
-               'Custome' = {
-                   if (is.null(input$genome)) {
-                       return(NULL)
-                   } else {
-                       # load genome file
-                       trans <- read_tsv(input$genome$datapath)
-
-                       # get regions
-                       as.data.frame(
-                           promoters(makeGRangesFromDataFrame(trans, keep.extra.columns = TRUE),
-                                     upstream = input$distance * 1000,
-                                     downstream = input$distance * 1000)
-                       )
-                   }
-               })
-    })
-
-    # get column names of genome file
-    genome_cols <- reactive({
-        if (!is.null(genome())) {
-            names(genome())
-        } else {
-            'Pending'
-        }
     })
 
     # observers for choosing columns names
     observe({
-        updateSelectInput(session,
-                          'peak_id_col',
-                          choices = peak_cols())
+        updateSelectInput(
+            session,
+            'peak_id_col',
+            choices = names(peaks()),
+            selected = 'peak_name'
+        )
+
+        updateCheckboxGroupInput(
+            session,
+            'peak_columns',
+            choices = c('All', names(peaks())),
+            selected = 'All',
+            inline = TRUE
+        )
     })
 
     observe({
-        updateSelectInput(session,
-                          'region_id',
-                          choices = expression_cols())
-    })
+        updateSelectInput(
+            session,
+            'region_id',
+            choices = names(expression()),
+            selected = 'tx_id'
+        )
 
-    observe({
-        updateSelectInput(session,
-                          'stat_id',
-                          choices = expression_cols())
-    })
+        updateSelectInput(
+            session,
+            'stat_id',
+            choices = names(expression()),
+            selected = 'stat1'
+        )
 
-    observe({
-        updateSelectInput(session,
-                          'stat_id2',
-                          choices = expression_cols())
+        updateSelectInput(
+            session,
+            'stat_id2',
+            choices = names(expression()),
+            selected = 'stat2'
+        )
+
+        updateCheckboxGroupInput(
+            session,
+            'expression_columns',
+            choices = c('All', names(expression())),
+            selected = 'All',
+            inline = TRUE
+        )
     })
 
     observe({
         updateSelectInput(session,
                           'genome_id_col',
-                          choices = genome_cols())
-    })
+                          choices = names(genome()),
+                          selected = 'tx_id')
 
-    observe({
-        updateCheckboxGroupInput(session,
-                                 'peak_columns',
-                                 choices = c('All', names(peaks())),
-                                 selected = 'All',
-                                 inline = TRUE)
-    })
-
-    observe({
-        updateCheckboxGroupInput(session,
-                                 'expression_columns',
-                                 choices = c('All', names(expression())),
-                                 selected = 'All',
-                                 inline = TRUE)
-    })
-
-    observe({
-        updateCheckboxGroupInput(session,
-                                 'genome_columns',
-                                 choices = c('All', names(genome())),
-                                 selected = 'All',
-                                 inline = TRUE)
+        updateCheckboxGroupInput(
+            session,
+            'genome_columns',
+            choices = c('All', names(genome())),
+            selected = 'All',
+            inline = TRUE
+        )
     })
 
     # render tabs ----
@@ -430,7 +408,7 @@ server <- function(input, output, session) {
     filtered_peaks <- reactive({
         if (is.null(input$peak_columns)) {
             return(NULL)
-        } else if (input$peak_columns == 'All') {
+        } else if ('All' %in% input$peak_columns) {
             peaks()
         } else {
             peaks()[, input$peak_columns]
@@ -449,7 +427,7 @@ server <- function(input, output, session) {
     filtered_expression <- reactive({
         if (is.null(input$expression_columns)) {
             return(NULL)
-        } else if (input$expression_columns == 'All') {
+        } else if ('All' %in% input$expression_columns) {
             expression()
         } else {
             expression()[, input$expression_columns]
@@ -459,7 +437,7 @@ server <- function(input, output, session) {
     output$expression_tab <- renderDataTable({
         validate(
             need(filtered_expression(),
-                'Pleas upload expression file to show here.')
+                 'Pleas upload expression file to show here.')
         )
         filtered_expression()
     })
@@ -468,7 +446,7 @@ server <- function(input, output, session) {
     filtered_genome <- reactive({
         if (is.null(input$genome_columns)) {
             return(NULL)
-        } else if (input$genome_columns == 'All') {
+        } else if ('All' %in% input$genome_columns) {
             genome()
         } else {
             genome()[, input$genome_columns]
@@ -484,68 +462,102 @@ server <- function(input, output, session) {
     })
 
     ## merge genome and regions ----
-    expression_genome <- reactive({
-        if (is.null(genome()) | is.null(expression())) {
-            return(NULL)
-        } else {
-           try(
-               merge(x = expression(),
-                     y = genome(),
-                     by.y = input$genome_id_col,
-                     by.x = input$region_id)
-           )
-        }
-    })
+    # expression_genome <- reactive({
+    #     tryCatch({
+    #         merge(x = expression(),
+    #               y = genome(),
+    #               by.y = input$genome_id_col,
+    #               by.x = input$region_id)
+    #     }, error = function(err) {
+    #         message("expression and genome merge failed.")
+    #         message(paste("expression is", nrow(expression()), "by", ncol(expression())))
+    #         message(paste("genome is", nrow(genome()), "by", ncol(genome())))
+    #         message(paste("merge attempted by", input$region_id, "and", input$genome_id_col))
+    #     })
+    # })
 
     ## get associated peaks ----
     ap <- reactive({
-        if (is.null(input$peaks) | is.null(input$expression) | is.null(input$genome)) {
-            return(NULL)
-        } else {
-            peaks_gr <- makeGRangesFromDataFrame(peaks(), keep.extra.columns = TRUE)
-            regions_gr <- makeGRangesFromDataFrame(expression_genome(), keep.extra.columns = TRUE)
+        try({
+            pp <- makeGRangesFromDataFrame(peaks(),
+                                           keep.extra.columns = TRUE)
 
-            try(
-                associated_peaks(peaks_gr,
-                                 regions_gr,
-                                 input$region_id,
-                                 base = input$distance * 1000)
-            )
-        }
+            expression_genome <- merge(x = expression(),
+                                       y = genome(),
+                                       by.y = input$genome_id_col,
+                                       by.x = input$region_id)
+
+            rr <- makeGRangesFromDataFrame(expression_genome,
+                                           keep.extra.columns = TRUE)
+            associated_peaks(peaks = pp,
+                             regions = rr,
+                             regions_col = input$region_id,
+                             base = input$distance * 1000)
+        })
+        # tryCatch({
+        #     pp <- makeGRangesFromDataFrame(peaks(),
+        #                                    keep.extra.columns = TRUE)
+        #     rr <- makeGRangesFromDataFrame(expression_genome(),
+        #                                    keep.extra.columns = TRUE)
+        #     associated_peaks(peaks = pp,
+        #                      regions = rr,
+        #                      regions_col = input$region_id,
+        #                      base = input$distance * 1000)
+        # }, error = function(err) {
+        #     message('The call to associated_peaks failed.')
+        #     message(paste('peaks is a ', as.character(class(pp)),'object with length', length(pp)))
+        #     message(paste('regions is a ', as.character(class(rr)),'object with length', length(rr)))
+        # })
     })
 
     ## render associated peaks tab
     output$ap <- renderDataTable({
-        expression_genome()
         validate(
             need(ap(), 'Please upload files to show associated peaks here.')
         )
 
-        if (is.null(input$peaks) | is.null(input$expression) | is.null(input$genome)) {
-            return(NULL)
-        } else {
-            as.data.frame(ap())
-        }
+        as_tibble(ap())
     })
 
     ## get direct targets ----
     dt <- reactive({
-        if (is.null(peaks()) | is.null(expression_genome())) {
-            return(NULL)
+        if (input$type == 'Two') {
+            stat <- c(input$stat_id, input$stat_id2)
         } else {
-            if (input$type == 'Two') {
-                stat <- c(input$stat_id, input$stat_id2)
-            } else {
-                stat <- input$stat_id
-            }
-                tryCatch({
-                    direct_targets(peaks = makeGRangesFromDataFrame(peaks(), keep.extra.columns = TRUE),
-                                   regions = makeGRangesFromDataFrame(expression_genome(), keep.extra.columns = TRUE),
-                                   regions_col = input$region_id,
-                                   stats_col = stat,
-                                   base = input$distance * 1000)
-                }, error = function(err) print('Error'))
+            stat <- input$stat_id
         }
+        try({
+            pp <- makeGRangesFromDataFrame(peaks(),
+                                           keep.extra.columns = TRUE)
+
+            expression_genome <- merge(x = expression(),
+                                       y = genome(),
+                                       by.y = input$genome_id_col,
+                                       by.x = input$region_id)
+
+            rr <- makeGRangesFromDataFrame(expression_genome,
+                                           keep.extra.columns = TRUE)
+            direct_targets(peaks = pp,
+                           regions = rr,
+                           regions_col = input$region_id,
+                           stats_col = stat,
+                           base = input$distance * 1000)
+        })
+        # tryCatch({
+        #     pp <- makeGRangesFromDataFrame(peaks(),
+        #                                    keep.extra.columns = TRUE)
+        #     rr <- makeGRangesFromDataFrame(expression_genome(),
+        #                                    keep.extra.columns = TRUE)
+        #     direct_targets(peaks = pp,
+        #                    regions = rr,
+        #                    regions_col = input$region_id,
+        #                    stats_col = stat,
+        #                    base = input$distance * 1000)
+        # }, error = function(err) {
+        #     message('The call to direct_targets failed.')
+        #     message(paste('peaks is a ', as.character(class(pp)),'object with length', length(pp)))
+        #     message(paste('regions is a ', as.character(class(rr)),'object with length', length(rr)))
+        # })
     })
 
     ## render direct targets tab
@@ -553,22 +565,28 @@ server <- function(input, output, session) {
         validate(
             need(dt(), 'Please upload files to show direct targets here.')
         )
-        if (is.null(input$peaks) | is.null(input$expression) | is.null(input$genome)) {
-            return(NULL)
-        } else {
-            as.data.frame(dt())
-        }
+        as_tibble(dt())
     })
 
     ## plot tab ----
-    dt_cols <- reactive({
-        names(as.data.frame(dt()))
-    })
 
     # observer for the column names to use in plot
     observe({
-        updateSelectInput(session, 'plot_rank', choices = dt_cols())
-        updateSelectInput(session, 'plot_group', choices = dt_cols())
+        validate(
+            need(dt(), 'Please upload files to show direct targets here.')
+        )
+        updateSelectInput(
+            session,
+            'plot_rank',
+            choices = names(as.data.frame(dt())),
+            selected = 'score'
+        )
+        updateSelectInput(
+            session,
+            'plot_group',
+            choices = names(as.data.frame(dt())),
+            selected = 'stat'
+        )
     })
 
     # render plot
@@ -587,9 +605,13 @@ server <- function(input, output, session) {
             labels <- unlist(strsplit(input$plot_labels, ','))
 
             # make a group factor
-            fac <- cut(group,
-                       breaks = breaks,
-                       labels = labels)
+            tryCatch({
+                fac <- cut(group,
+                           breaks = quantile(rank, as.numeric(breaks)),
+                           labels = labels)
+            }, error = function(err) {
+                message(paste("cutting", input$plot_group, "by", input$plot_breaks, "failed."))
+            })
 
             # plot axes
             xlab <- input$plot_xlab
@@ -597,13 +619,17 @@ server <- function(input, output, session) {
             main <- input$plot_main
 
             # make plot
-            plot_predictions(rank,
-                             fac,
-                             colors,
-                             labels,
-                             xlab = xlab,
-                             ylab = ylab,
-                             main = main)
+            tryCatch({
+                plot_predictions(rank,
+                                 fac,
+                                 colors,
+                                 labels,
+                                 xlab = xlab,
+                                 ylab = ylab,
+                                 main = main)
+            }, error = function(err) {
+                message("the call to plot_predictions failed.")
+            })
         }
     })
 
