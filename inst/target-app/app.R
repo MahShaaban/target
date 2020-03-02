@@ -462,36 +462,52 @@ server <- function(input, output, session) {
     })
 
     ## merge genome and regions ----
-    expression_genome <- reactive({
-        tryCatch({
-            merge(x = expression(),
-                  y = genome(),
-                  by.y = input$genome_id_col,
-                  by.x = input$region_id)
-        }, error = function(err) {
-            message("expression and genome merge failed.")
-            message(paste("expression is", nrow(expression()), "by", ncol(expression())))
-            message(paste("genome is", nrow(genome()), "by", ncol(genome())))
-            message(paste("merge attempted by", input$region_id, "and", input$genome_id_col))
-        })
-    })
+    # expression_genome <- reactive({
+    #     tryCatch({
+    #         merge(x = expression(),
+    #               y = genome(),
+    #               by.y = input$genome_id_col,
+    #               by.x = input$region_id)
+    #     }, error = function(err) {
+    #         message("expression and genome merge failed.")
+    #         message(paste("expression is", nrow(expression()), "by", ncol(expression())))
+    #         message(paste("genome is", nrow(genome()), "by", ncol(genome())))
+    #         message(paste("merge attempted by", input$region_id, "and", input$genome_id_col))
+    #     })
+    # })
 
     ## get associated peaks ----
     ap <- reactive({
-        tryCatch({
+        try({
             pp <- makeGRangesFromDataFrame(peaks(),
                                            keep.extra.columns = TRUE)
-            rr <- makeGRangesFromDataFrame(expression_genome(),
+
+            expression_genome <- merge(x = expression(),
+                                       y = genome(),
+                                       by.y = input$genome_id_col,
+                                       by.x = input$region_id)
+
+            rr <- makeGRangesFromDataFrame(expression_genome,
                                            keep.extra.columns = TRUE)
             associated_peaks(peaks = pp,
                              regions = rr,
                              regions_col = input$region_id,
                              base = input$distance * 1000)
-        }, error = function(err) {
-            message('The call to associated_peaks failed.')
-            message(paste('peaks is a ', as.character(class(pp)),'object with length', length(pp)))
-            message(paste('regions is a ', as.character(class(rr)),'object with length', length(rr)))
         })
+        # tryCatch({
+        #     pp <- makeGRangesFromDataFrame(peaks(),
+        #                                    keep.extra.columns = TRUE)
+        #     rr <- makeGRangesFromDataFrame(expression_genome(),
+        #                                    keep.extra.columns = TRUE)
+        #     associated_peaks(peaks = pp,
+        #                      regions = rr,
+        #                      regions_col = input$region_id,
+        #                      base = input$distance * 1000)
+        # }, error = function(err) {
+        #     message('The call to associated_peaks failed.')
+        #     message(paste('peaks is a ', as.character(class(pp)),'object with length', length(pp)))
+        #     message(paste('regions is a ', as.character(class(rr)),'object with length', length(rr)))
+        # })
     })
 
     ## render associated peaks tab
@@ -510,21 +526,38 @@ server <- function(input, output, session) {
         } else {
             stat <- input$stat_id
         }
-        tryCatch({
+        try({
             pp <- makeGRangesFromDataFrame(peaks(),
                                            keep.extra.columns = TRUE)
-            rr <- makeGRangesFromDataFrame(expression_genome(),
+
+            expression_genome <- merge(x = expression(),
+                                       y = genome(),
+                                       by.y = input$genome_id_col,
+                                       by.x = input$region_id)
+
+            rr <- makeGRangesFromDataFrame(expression_genome,
                                            keep.extra.columns = TRUE)
             direct_targets(peaks = pp,
                            regions = rr,
                            regions_col = input$region_id,
                            stats_col = stat,
                            base = input$distance * 1000)
-        }, error = function(err) {
-            message('The call to direct_targets failed.')
-            message(paste('peaks is a ', as.character(class(pp)),'object with length', length(pp)))
-            message(paste('regions is a ', as.character(class(rr)),'object with length', length(rr)))
         })
+        # tryCatch({
+        #     pp <- makeGRangesFromDataFrame(peaks(),
+        #                                    keep.extra.columns = TRUE)
+        #     rr <- makeGRangesFromDataFrame(expression_genome(),
+        #                                    keep.extra.columns = TRUE)
+        #     direct_targets(peaks = pp,
+        #                    regions = rr,
+        #                    regions_col = input$region_id,
+        #                    stats_col = stat,
+        #                    base = input$distance * 1000)
+        # }, error = function(err) {
+        #     message('The call to direct_targets failed.')
+        #     message(paste('peaks is a ', as.character(class(pp)),'object with length', length(pp)))
+        #     message(paste('regions is a ', as.character(class(rr)),'object with length', length(rr)))
+        # })
     })
 
     ## render direct targets tab
@@ -536,22 +569,22 @@ server <- function(input, output, session) {
     })
 
     ## plot tab ----
-    dt_cols <- reactive({
-        names(as.data.frame(dt()))
-    })
 
     # observer for the column names to use in plot
     observe({
+        validate(
+            need(dt(), 'Please upload files to show direct targets here.')
+        )
         updateSelectInput(
             session,
             'plot_rank',
-            choices = dt_cols(),
+            choices = names(as.data.frame(dt())),
             selected = 'score'
         )
         updateSelectInput(
             session,
             'plot_group',
-            choices = dt_cols(),
+            choices = names(as.data.frame(dt())),
             selected = 'stat'
         )
     })
