@@ -11,7 +11,7 @@ require(TxDb.Mmusculus.UCSC.mm9.knownGene)
 require(target)
 require(dplyr)
 require(readr)
-#require(markdown)
+require(markdown)
 
 # define ui -------------------------------------------------------------------
 ui <- navbarPage(
