@@ -7,72 +7,87 @@ require(target)
 require(GenomicRanges)
 require(GenomicFeatures)
 require(broom)
+require(TxDb.Hsapiens.UCSC.hg19.knownGene)
+require(TxDb.Hsapiens.UCSC.hg38.knownGene)
+require(TxDb.Mmusculus.UCSC.mm10.knownGene)
+require(TxDb.Mmusculus.UCSC.mm9.knownGene)
 
 source('modules.R')
+source('demo.R')
 
 # define server
 server <- function(input, output, session) {
     # read inputs
-    peaks <- list(
-        data = callModule(
-            tsvFile, 
-            'peaks_file',
-            'sim_peaks.tsv'
-        ),
-        name_column = callModule(
-            columnSelect,
-            id = 'peaks_name_column',
-            table = peaks$data()
-        ),
-        distance = callModule(
-            numberSlider,
-            id = 'peaks_distance'
-        )
+    peaks <- list()
+    peaks$data <- callModule(
+        tsvFile, 
+        'peaks_file',
+        demo$peaks$file
+    )
+    peaks$name_column <- callModule(
+        columnSelect,
+        id = 'peaks_name_column',
+        path = demo$peaks$file
+    )
+    peaks$distance <- callModule(
+        numberSlider,
+        id = 'peaks_distance'
     )
     
     output$peaks_table <- renderDataTable(peaks$data())
     
-    expression <- list(
-        data = callModule(
-            tsvFile,
-            'expression_file',
-            'sim_transcripts.tsv'
-        ),
-        name_column = callModule(
-            columnSelect,
-            id = 'expression_name_column',
-            table = expression
-        ),
-        number_factor = callModule(
-            characterRadioInput,
-            id = 'expression_factor_number'
-        ),
-        stat_column1 = callModule(
-            columnSelect,
-            id = 'expression_stat_column1',
-            table = expression
-        ),
-        stat_column2 = callModule(
-            columnSelect,
-            id = 'expression_stat_column2',
-            table = expression
-        )
+    expression <- list()
+    
+    expression$data <- callModule(
+        tsvFile,
+        'expression_file',
+        demo$expression$file
+    )
+    expression$name_column <- callModule(
+        columnSelect,
+        id = 'expression_name_column',
+        path = demo$expression$file
+    )
+    # expression$number_factor <- callModule(
+    #     characterRadioInput,
+    #     id = 'expression_factor_number'
+    # )
+    expression$number_factor <- reactive(input$expression_factor_number)
+    expression$stat_column1 <- callModule(
+        columnSelect,
+        id = 'expression_stat_column1',
+        path = demo$expression$file
+    )
+    expression$stat_column2 <- callModule(
+        columnSelect,
+        id = 'expression_stat_column2',
+        path = demo$expression$file
     )
     
     output$expression_table <- renderDataTable(expression$data())
     
-    genome <- list(
-        data = callModule(
-            tsvFile, 
-            'genome_file', 
-            'sim_genome.tsv'
-        ),
-        name_column = callModule(
-            columnSelect,
-            id = 'genome_name_column',
-            table = genome$data()
-        )
+    genome <- list()
+    
+    genome$data <- callModule(
+        tsvFile,
+        'genome_file',
+        demo$genome$file
     )
+    
+    observe({
+        if (input$genome_type != 'Custome') {
+            genome$data <- reactive({
+                load_genome(input$genome_type)
+            })
+        }
+    })
+    
+    genome$name_column <- callModule(
+        columnSelect,
+        id = 'genome_name_column',
+        path = demo$genome$file
+    )
+    
     output$genome_table <- renderDataTable(genome$data())
     
     # calculate associated peaks
@@ -108,21 +123,11 @@ server <- function(input, output, session) {
     })
     
     # to be replaced by call to the input module
-    params1 <- callModule(
-        predictionVariables,
-        return = 'plot'
-    )
-    params1 <- list(
-        ranking = 'score_rank',
-        grouping = 'stat',
-        groupby = 'top',
-        group_breaks = '10000',
-        group_colors = 'green,gray,red',
-        group_labels = 'comp,none,coop',
-        xlabel = 'Ranking',
-        ylabel = 'ECDF',
-        main = 'Aggregated Functions'
-    )
+    # params1 <- callModule(
+    #     predictionVariables,
+    #     return = 'plot'
+    # )
+    params1 <- demo_plot
     
     # make prediction plot
     output$predicted_plot <- renderPlot({
@@ -130,19 +135,11 @@ server <- function(input, output, session) {
     })
     
     # to be replaced by call to the input module
-    params2 <- callModule(
-        predictionVariables,
-        return = 'test'
-    )
-    params2 <- list(
-        ranking = 'score_rank',
-        grouping = 'stat',
-        groupby = 'top',
-        group_breaks = '10000',
-        group_labels = 'comp,none,coop',
-        compare = 'coop,none',
-        alternative = 'greater'
-    )
+    # params2 <- callModule(
+    #     predictionVariables,
+    #     return = 'test'
+    # )
+    params2 <- demo_test
     
     # make prediction testing
     output$predicted_testing <- renderDataTable({

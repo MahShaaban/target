@@ -80,16 +80,12 @@ columnSelectInput <- function(id, label, default, tip) {
 #' @param table A data.frame to select a column name from.
 #'
 #' @return A reactive character string.
-columnSelect <- function(input, output, session, table) {
-    column_names <- reactive({
-        names(
-            table
-        )
-    })
+columnSelect <- function(input, output, session, path) {
+    column_names <- names(read_tsv(path, n_max = 1))
     observe(
         updateSelectInput(
             inputId = input$column,
-            choices = column_names(),
+            choices = column_names,
             session = session
         )
     )
@@ -153,7 +149,7 @@ numberSlider <- function(input, output, session) {
 characterRadioInput <- function(id, label, choices, selected, tip) {
     # declare name space
     ns <- NS(id)
-    
+
     # make ui
     tagList(
         radioButtons(
@@ -213,7 +209,7 @@ predictionVariablesInput <- function(id, return = 'plot') {
         radioButtons(
             inputId = ns('groupby'),
             label = 'Group By',
-            choices = c('top', 'quantiles'),
+            choices = c('top', 'quantiles', 'values'),
             selected = 'top',
             inline = TRUE
         ),
@@ -268,9 +264,11 @@ predictionVariablesInput <- function(id, return = 'plot') {
     )
     
     # return tag list
-    switch(return,
-           'plot' = tagList(shared, plot),
-           'test' = tagList(shared, test))
+    switch(
+        return,
+        'plot' = return(tagList(shared, plot)),
+        'test' = return(tagList(shared, test))
+    )
 }
 
 #' Plotting variables server processing
@@ -332,12 +330,20 @@ predictionVariables <- function(input, output, session, return = 'plot') {
 #'
 #' @return A data.frame
 run_target <- function(return = 'associated_peaks', peaks, expression,
-                       genome, expression_name, genome_name, factor_num,
-                       stat1, stat2, distance) {
+                       genome, expression_name, genome_name, factor_num = NULL,
+                       stat1 = NULL, stat2 = NULL, distance = NULL) {
+    # get ranges from genome
+    genome_ranges <- as.data.frame(
+        promoters(
+            makeGRangesFromDataFrame(genome, keep.extra.columns = TRUE),
+            upstream = distance * 1000,
+            downstream = distance * 1000
+        )
+    )
     
     # merge the expression and genome data.frames
     regions <- merge(y = expression,
-                     x = genome,
+                     x = genome_ranges,
                      by.y = expression_name,
                      by.x = genome_name)
     
@@ -350,7 +356,7 @@ run_target <- function(return = 'associated_peaks', peaks, expression,
                     peaks = makeGRangesFromDataFrame(peaks, keep.extra.columns = TRUE),
                     regions = makeGRangesFromDataFrame(regions, keep.extra.columns = TRUE),
                     regions_col = expression_name,
-                    base = distance
+                    base = distance * 1000
                 )
             })
         },
@@ -364,7 +370,7 @@ run_target <- function(return = 'associated_peaks', peaks, expression,
                     regions = makeGRangesFromDataFrame(regions, keep.extra.columns = TRUE),
                     regions_col = expression_name,
                     stats_col = stats,
-                    base = distance
+                    base = distance * 1000
                 )
             })
         }
@@ -386,44 +392,26 @@ run_target <- function(return = 'associated_peaks', peaks, expression,
 #'
 #' @return A plot or a data.frame.
 make_prediction <- function(df, params, return = 'plot') {
+    
     # unpack the shared inputs
-    rank <- unlist(df[, params$ranking])
-    grouping <- unlist(df[, params$grouping])
-    breaks <- as.numeric(unlist(strsplit(params$group_breaks, ',')))
-    labels <- unlist(strsplit(params$group_labels, ','))
+    rank <- subset(df, select = params$ranking, drop = TRUE)
+    grouping <- subset(df, select = params$grouping, drop = TRUE)
+    breaks <- unpack(params$group_breaks, as = 'numeric')
+    labels <- unpack(params$group_labels)
     
     # make a grouping variables
     group <- switch(
         params$groupby,
-        'quantiles' = {
-            try({
-                group <- cut(
-                    grouping,
-                    breaks = quantile(grouping, breaks),
-                    labels = labels
-                )
-                factor(group, levels = group)
-            })
-        },
-        'top' = {
-            try({
-                group <- vector(mode = 'character', length = length(grouping))
-                group[order(grouping)[1:breaks]] <- labels[1]
-                group[order(grouping, decreasing = TRUE)[1:breaks]] <- labels[length(labels)]
-                if (length(labels) > 2) {
-                    group[group == ''] <- labels[2]
-                } else {
-                    group[group == ''] <- NA
-                }
-            })
-        }
+        'quantiles' = make_groups_quantiles(grouping, breaks, labels),
+        'top' = make_groups_top(grouping, breaks, labels),
+        'values' = make_groups_values(grouping, breaks, labels),
     )
     
     switch(return, 
            'plot' = {
                try({
                    # unpack the colors input
-                   colors <- unlist(strsplit(params$group_colors, ','))
+                   colors <- unpack(params$group_colors)
                    
                    # call plot
                    plot_predictions(
@@ -439,7 +427,7 @@ make_prediction <- function(df, params, return = 'plot') {
            },
            'test' = {
                # unpack the compare input
-               compare <- unlist(strsplit(params$compare, ','))
+               compare <- unpack(params$compare)
                
                # make an index to subset to the compared groups and remove na
                ind <- group %in% compare && !is.na(group)
@@ -457,11 +445,110 @@ make_prediction <- function(df, params, return = 'plot') {
            })
 }
 
+#' Group a vector by quantiles
+#'
+#' @param grouping A numeric vector
+#' @param breaks A numeric vector of length two
+#' @param labels A character vector
+#' 
+#' @details breaks is the lower and upper quantiles in that order to cut
+#'  the vector into a factor. 
+#'
+#' @return A factor
+make_groups_quantiles <- function(grouping, breaks, labels) {
+    stopifnot(length(breaks) == 2)
+    
+    vec <- cut(
+        grouping,
+        breaks = quantile(grouping, c(0, breaks, 1)),
+        labels = labels,
+        include.lowest = TRUE
+    )
+    
+    return(factor(vec, levels = labels))
+}
 
+#' Group a vector by top n from both directions
+#'
+#' @inheritParams make_groups_quantiles 
+#' 
+#' @details breaks is the number of entries from the lower and the upper
+#' directions in that order to cut the vector into a factor.
+#' 
+#' @return A factor
+make_groups_top <- function(grouping, breaks, labels) {
+    stopifnot(length(breaks) == 2)
+    
+    vec <- vector(mode = 'character', length = length(grouping))
+    vec[order(grouping)[1:min(abs(breaks))]] <- labels[1]
+    vec[order(grouping, decreasing = TRUE)[1:max(breaks)]] <- labels[length(labels)]
+    if (length(labels) > 2) {
+        vec[vec == ''] <- labels[2]
+    } else {
+        vec[vec == ''] <- NA
+    }
+    return(vec)
+}
 
+#' Group a vector by values
+#'
+#' @inheritParams make_groups_quantiles 
+#' 
+#' @details breaks is the break values from the vector in order from smaller
+#' to bigger values to cut the vector into a factor.
+#' 
+#' @return A factor
+make_groups_values <- function(grouping, breaks, labels) {
+    stopifnot(length(breaks) == 2)
+    vec <- cut(
+        grouping,
+        breaks = c(min(grouping), breaks, max(grouping)),
+        labels = labels,
+        include.lowest = TRUE
+    )
+    return(factor(vec, levels = labels))
+}
 
+#' Load transcripts from TxDb object
+#'
+#' @param type A character string: hg19, hg38, mm10 or mm9
+#' @param columns A character vector. Default GENEID and TXID
+#' @param tidy A logical. Default TRUE to return a data.frame
+#'
+#' @return A data.frame
+load_genome <- function(type, columns = c('GENEID', 'TXID'), tidy = TRUE) {
+    # switch to the corresponding bioconductor package
+    txdb <- switch(
+        type,
+        'hg19' = TxDb.Hsapiens.UCSC.hg19.knownGene,
+        'hg38' = TxDb.Hsapiens.UCSC.hg38.knownGene,
+        'mm10' = TxDb.Mmusculus.UCSC.mm10.knownGene,
+        'mm9' = TxDb.Mmusculus.UCSC.mm9.knownGene
+    )
+    
+    # extract transcripts
+    trans <- transcripts(
+        txdb,
+        columns = columns
+    )
+    
+    # tidy if true
+    if (tidy) {
+        trans <- as.data.frame(
+            trans
+        )
+    }
+    
+    # return
+    return(trans)
+}
 
-
-
-
-
+unpack <- function(string, split = ',', as = 'character') {
+    s <- strsplit(string, split = split)
+    s <- unlist(s)
+    switch(
+        as,
+        'character' = return(as.character(s)),
+        'numeric' = return(as.numeric(s))
+    )
+}
